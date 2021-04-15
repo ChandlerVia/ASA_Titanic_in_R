@@ -1,0 +1,80 @@
+---
+title: "Titanic Examination"
+author: "Chandler Via"
+date: "4/6/2021"
+output: html_document
+---
+
+```{r preparations}
+options(digits = 3)    # report 3 significant digits
+
+library(titanic)
+library(tidyverse)
+titanic::titanic_train
+
+?titanic_train
+
+titanic <- titanic_train %>%
+  select(Survived, Pclass, Sex, Age, SibSp, Parch, Fare, Embarked,
+         Cabin, Ticket, Name) 
+str(titanic)
+
+titanic <- na.omit(titanic)  #Remove blank/na values simply
+titanic <- titanic[titanic$Embarked != '', ]  #Remove Embarkation values that are missing
+titanic$Sex[which(titanic$Sex == 'female')] <- 0
+titanic$Sex[which(titanic$Sex == 'male')] <- 1
+titanic$Sex <- strtoi(titanic$Sex)
+head(titanic)
+
+```
+
+```{r Summary}
+mean(titanic$Fare)
+median(titanic$Fare)
+
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+getmode(titanic$Fare)
+range(titanic$Fare)
+
+sd(titanic$Fare)
+var(titanic$Fare)
+
+std <- function(x) sd(x)/sqrt(length(x))
+std(titanic$Fare)
+
+hist(titanic$Fare)
+stem(titanic$Age, scale = 2)
+
+```
+
+```{r Gender_&_Survival}
+
+chisq.test(titanic$Sex, titanic$Survived)
+
+```
+
+```{r Survival_&_Gender_Age_PClass}
+library(dplyr)
+################
+aov.out = aov(Survived ~ Sex * Age * Pclass, data=titanic)
+options(show.signif.stars = F)
+summary(aov.out)
+```
+
+```{r Fare_&_PClass}
+library(MASS)
+model = polr(as.factor(Pclass) ~ Fare, data = titanic)
+summary(model)
+(ctable <- coef(summary(model)))
+p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+(ctable <- cbind(ctable, "p value" = p))
+```
+Show graphs for each of the Classes and for each class show boxplot (explains outliers and mean)
+
+```{r Survival_&_Embarked}
+chisq.test(titanic$Embarked, titanic$Survived)
+```
